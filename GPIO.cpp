@@ -100,8 +100,8 @@ void togglePin( uint8_t port, uint8_t pinNumber )
 void setPortMode ( uint8_t port, uint8_t mode, uint8_t mask )
 {
 
-    //I know, there are better ways to do this, but code should be
-    //readable for beginners.
+    //Ugly code, but macros must be avoided (beginners can't find the correct
+    //location of syntax-errors, when macros are used.
     switch ( port )
     {
         case port_A:
@@ -161,7 +161,11 @@ void setPortMode ( uint8_t port, uint8_t mode, uint8_t mask )
             return;
 
         case port_I: //I think, that port I does not exist on any AVR
-            break;
+            #ifdef DDRI
+            DDRI |= mask & mode;
+            DDRI &= ~(mask & ~mode);
+            #endif
+            return;
 
         case port_J:
             #ifdef DDRJ
@@ -174,6 +178,13 @@ void setPortMode ( uint8_t port, uint8_t mode, uint8_t mask )
             #ifdef DDRK
             DDRK |= mask & mode;
             DDRK &= ~(mask & ~mode);
+            #endif
+            return;
+
+        case port_L:
+            #ifdef DDRL
+            DDRL |= mask & mode;
+            DDRL &= ~(mask & ~mode);
             #endif
             return;
 
@@ -244,8 +255,12 @@ void setPortPullup( uint8_t port, uint8_t pullup, uint8_t mask )
             return;
 
         case port_I: //I think, that port I does not exist on any AVR
-            break;
-
+             #ifdef PORTI
+            PORTI|= mask & pullup;
+            PORTI &= ~(mask & ~pullup);
+            #endif
+            return;
+ 
         case port_J:
             #ifdef PORTJ
             PORTJ |= mask & pullup;
@@ -257,6 +272,13 @@ void setPortPullup( uint8_t port, uint8_t pullup, uint8_t mask )
             #ifdef PORTK
             PORTK |= mask & pullup;
             PORTK &= ~(mask & ~pullup);
+            #endif
+            return;
+
+        case port_L:
+            #ifdef PORTL
+            PORTL |= mask & pullup;
+            PORTL &= ~(mask & ~pullup);
             #endif
             return;
 
@@ -328,7 +350,11 @@ void writePort( uint8_t port, uint8_t voltageLevels, uint8_t mask )
             return;
 
         case port_I: //I think, that port I does not exist on any AVR
-            break;
+            #ifdef PORTI
+            PORTI |= mask & voltageLevels;
+            PORTI &= ~(mask & ~voltageLevels);
+            #endif
+            return;
 
         case port_J:
             #ifdef PORTJ
@@ -341,6 +367,13 @@ void writePort( uint8_t port, uint8_t voltageLevels, uint8_t mask )
             #ifdef PORTK
             PORTK |= mask & voltageLevels;
             PORTK &= ~(mask & ~voltageLevels);
+            #endif
+            return;
+
+        case port_L:
+            #ifdef PORTL
+            PORTL |= mask & voltageLevels;
+            PORTL &= ~(mask & ~voltageLevels);
             #endif
             return;
 
@@ -404,7 +437,10 @@ void togglePort( uint8_t port, uint8_t mask )
             return;
 
         case port_I: //I think, that port I does not exist on any AVR
-            break;
+            #ifdef PORTI
+            PORTI ^= mask;
+            #endif
+            return;
 
         case port_J:
             #ifdef PORTJ
@@ -415,6 +451,12 @@ void togglePort( uint8_t port, uint8_t mask )
         case port_K:
             #ifdef PORTK
             PORTK ^= mask;
+            #endif
+            return;
+
+        case port_L:
+            #ifdef PORTL
+            PORTL ^= mask;
             #endif
             return;
 
@@ -477,6 +519,9 @@ uint8_t readPort( uint8_t port, uint8_t mask)
             break;
 
         case port_I: //I think, that port I does not exist on any AVR
+            #ifdef PINI
+            return PINI & mask;
+            #endif
             break;
 
         case port_J:
@@ -488,6 +533,12 @@ uint8_t readPort( uint8_t port, uint8_t mask)
         case port_K:
             #ifdef PINK
             return PINK & mask;
+            #endif
+            break;
+
+        case port_L:
+            #ifdef PINL
+            return PINL & mask;
             #endif
             break;
 
@@ -507,8 +558,6 @@ uint8_t readPort( uint8_t port, uint8_t mask)
 //output. Writing a 0 to this Bit makes PB7 to an input
 void _setDDRBitValue( uint8_t port, uint8_t bitNumber, uint8_t bitValue)
 {
-    //I know, there are better ways to do this, but code should be
-    //readable for beginners.
     switch (port)
     {
         case port_A:
@@ -568,7 +617,11 @@ void _setDDRBitValue( uint8_t port, uint8_t bitNumber, uint8_t bitValue)
             return;
 
         case port_I: //I think, Port I does not exist on any AVR
-           break;
+            #ifdef DDRI
+            if (bitValue)  DDRI |=  (0x01<< bitNumber);
+            else           DDRI &= ~(0x01<< bitNumber);
+            #endif
+            return;
 
         case port_J:
             #ifdef DDRJ
@@ -606,8 +659,6 @@ void _setDDRBitValue( uint8_t port, uint8_t bitNumber, uint8_t bitValue)
 //   the internal pullup-resistor, while a 1 activates it.
 void _setPORTBitValue( uint8_t port, uint8_t bitNumber, uint8_t bitValue)
 {
-    //I know, there are better ways to do this, but code should be
-    //readable for beginners.
     switch (port)
     {
         case port_A:
@@ -667,7 +718,11 @@ void _setPORTBitValue( uint8_t port, uint8_t bitNumber, uint8_t bitValue)
             return;
 
         case port_I: //I think, Port I does not exist on any AVR
-           break;
+            #ifdef PORTI
+            if (bitValue)  PORTI |=  (0x01<< bitNumber);
+            else           PORTI &= ~(0x01<< bitNumber);
+            #endif
+            return;
 
         case port_J:
             #ifdef PORTJ
@@ -749,7 +804,10 @@ void _togglePORTBit( uint8_t port, uint8_t bitNumber )
             return;
 
         case port_I: //Port I doesn't exist on any AVR
-            break;
+            #ifdef PORTI
+            PORTI ^= (0x01<<bitNumber);
+            #endif
+            return;
 
         case port_J:
             #ifdef PORTJ
@@ -776,74 +834,85 @@ uint8_t _getPINBit(uint8_t port, uint8_t bitNumber)
     {
         case port_A:
             #ifdef PINA
-                if (PINA & (0x01<<bitNumber)) return 1;
-                else                         return 0;
+            if (PINA & (0x01<<bitNumber)) return 1;
+            else                          return 0;
             #endif
             break;
 
         case port_B:
             #ifdef PINB
-                if (PINB & (0x01<<bitNumber)) return 1;
-                else                         return 0;
+            if (PINB & (0x01<<bitNumber)) return 1;
+            else                          return 0;
             #endif
             break;
 
         case port_C:
             #ifdef PINC
-                if (PINC & (0x01<<bitNumber)) return 1;
-                else                         return 0;
+            if (PINC & (0x01<<bitNumber)) return 1;
+            else                          return 0;
             #endif
             break;
 
         case port_D:
             #ifdef PIND
                 if (PIND & (0x01<<bitNumber)) return 1;
-                else                         return 0;
+                else                          return 0;
             #endif
             break;
 
         case port_E:
             #ifdef PINE
-                if (PINE & (0x01<<bitNumber)) return 1;
-                else                         return 0;
-            #endif
+            if (PINE & (0x01<<bitNumber)) return 1;
+            else                          return 0;
+            #endif 
             break;
 
         case port_F:
             #ifdef PINF
-                if (PINF & (0x01<<bitNumber)) return 1;
-                else                         return 0;
+            if (PINF & (0x01<<bitNumber)) return 1;
+            else                          return 0;
             #endif
             break;
 
         case port_G:
             #ifdef PING
-                if (PING & (0x01<<bitNumber)) return 1;
-                else                         return 0;
+            if (PING & (0x01<<bitNumber)) return 1;
+            else                          return 0;
             #endif
             break;
 
         case port_H:
             #ifdef PINH
-                if (PINH & (0x01<<bitNumber)) return 1;
-                else                         return 0;
+            if (PINH & (0x01<<bitNumber)) return 1;
+            else                          return 0;
             #endif
             break;
 
         case port_I: //I think, Port I does not exist on any AVR
-            break; 
+            #ifdef PINI
+            if (PINI & (0x01<<bitNumber)) return 1;
+            else                          return 0;
+            #endif
+            break;
 
         case port_J:
             #ifdef PINJ
-                if (PINJ & (0x01<<bitNumber)) return 1;
-                else                         return 0;
+            if (PINJ & (0x01<<bitNumber)) return 1;
+            else                          return 0;
             #endif
             break;
 
         case port_K:
             #ifdef PINK
-                if (PINK & (0x01<<bitNumber)) return 1;
-                else                         return 0;
+            if (PINK & (0x01<<bitNumber)) return 1;
+            else                          return 0;
+            #endif
+            break;
+        
+        case port_L:
+            #ifdef PINL
+            if (PINL & (0x01<<bitNumber)) return 1;
+            else                          return 0;
             #endif
             break;
         
@@ -851,6 +920,6 @@ uint8_t _getPINBit(uint8_t port, uint8_t bitNumber)
             break;
     }
 
-    //should never be reached, when calling with correct arguments
+    //only reached for wrong argument or non existing port
     return 0;
 }
