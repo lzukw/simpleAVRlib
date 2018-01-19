@@ -54,8 +54,8 @@ In contrast to the core library of the Arduino-IDE, this library doesn't hide
 hardware-specific things to the programmer. For example without knowing how 
 Hardware-PWM works using the Timers, you won't be able to get a PWM-Signal 
 p and running. The necessary information can be found in the relevant section 
-(for example 8-Bit-Timer/Counters) of datasheet of the Micronconctroller, easier 
-to read.
+(for example 8-Bit-Timer/Counters) of datasheet of the Micronconctroller. But
+possibly there is information in the web, that is easier to read
 
 ## Code-Example ##
 
@@ -118,7 +118,7 @@ int main(void)
 The following code-example is also included in the examples-directory
 (File testGPIOPin.cpp)
 
-Same program as above, but now using C++-objects.
+Same program as above (using C), but now using C++-objects.
 
 ```C
 #include <stdint.h>

@@ -21,42 +21,47 @@
 /*
 The ATmega2560 has its INT2 Pin located at Pin PD2. This will be used as 
 external Interrupts. Pin PD3 will be used as ordinary input. Both pins 
-are connected to a button.
+are connected to a button (buttons connected between their pin and GND).
+
 All port B - pins are connected to LEDs (low-level turns on the LEDs).
-These LEDs display the value of a global variable "counter" (as a
+These LEDs display the value of a global variable `counter` (as a
 bitpattern). counter is increased every time an INT2-event happens
 (every times the button on PD2 is pushed). 
-But the interrupt is only enabled, while the button in PD3 is not
+
+But the interrupt is only enabled, while the button at pin PD3 is not
 pressed.
-Since buttons are bouncing, pushing the button on PD2 will maybe
-increase counter more than once.
+Since buttons are bouncing, pushing the button at pin PD2 may
+increase `counter` more than once.
 */
 
+#include <avr/interrupt.h>
 
 #include <stdint.h>
 #include <util/delay.h>
 
 #include "GPIO.h"
-#include "InterruptUtils.h"
 #include "ExternalInterrupts.h"
 
 
 //The global variable. If a variable is changed within an 
-//Interrupt-Service-Routine (or its callback-function), it must be declared as
-//volatile
+//Interrupt-Service-Routine, it must be declared as volatile
 volatile uint8_t counter = 2; 
 
 
-//This is the callback-Function, which shall be called on INT2-events
-void myCallbackFunction(void)
+//This is the Interrupt-Service-Routine for INT2-Events. The correct
+//Interrupt-vector must be passed to the ISR-macro
+ISR(INT2_vect)
 {
     counter++;
 }
+
 
 int main()
 {
     
     //make Pins PD3 and PD2 inputs with activated internal pullup-resistors
+	//Pins uses as external Interrupts, still must be programmed to be
+	//inputs first!
     GPIOPin pd2 = GPIOPin(port_D, 2, MODE_INPUT);
     pd2.setPinPullup(PULLUP_ON);
     GPIOPin pd3 = GPIOPin(port_D, 3, MODE_INPUT);
@@ -69,29 +74,47 @@ int main()
 
     //Falling edges occur on pushing the button (rising edges occur on 
     //releasing it).
-    ExtInt int2 = ExtInt( 2, EXTINT_FALLING_EDGE, myCallbackFunction );
+    ExtInt int2 = ExtInt( 2, EXTINT_FALLING_EDGE);
     
-    allowEnabledInterrupts();
+    //globally enable interrupts
+    sei();
     
     uint8_t lastButtonState = HIGH_LEVEL;
     
     while(1)
     {
-        //look for changes of the state of the button:
+        //look for changes of the state of the button on PD3:
         uint8_t actualButtonState = pd3.readPin();
         if ( actualButtonState != lastButtonState )
         {
             //Button on pd3 has been pressed or released
             if (actualButtonState == LOW_LEVEL)
-                //button hs been pressed -> disable INT2-Interrupt
+            {
+                //button has been pressed -> disable INT2-Interrupt
                 int2.disableExtInt(); 
+            }                
             else
+            {
                 //button has been released -> enable INT2-Interrupt
+                //
+                //But first clear a pending interrupt: If button on PD2 has
+                //been pushed, while Interrupts were disabled, then the
+                //interrupt-event is stored in the CPU in an internal
+                //interrupt-Flag. Not clearing the pending interrupt and
+                //just enabling interrupts would immediately execute the
+                //Interrupt-Service-Routine and therefore increase `counter`.
+                //
+                //Try the difference by commenting out  the
+                //clearPendingExtIntEvent()-method-call
+                int2.clearPendingExtIntEvent();
                 int2.enableExtInt(); 
+            }                
         }
         lastButtonState = actualButtonState;
         
-         ledPort.writePort( ~counter );
+        //display the value of the global variable counter on the LEDs as a
+        //bit-pattern
+        ledPort.writePort( ~counter );
          
         _delay_ms(100);
     }        
